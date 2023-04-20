@@ -1,6 +1,7 @@
 name: weekly fetch and parse GPU info to API
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
