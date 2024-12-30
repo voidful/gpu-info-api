@@ -85,26 +85,13 @@ def process_dataframe(df: pd.DataFrame, vendor: str) -> pd.DataFrame:
 
     if "Launch" not in df.columns.values:
         print("Launch not in following df:\n", df)
-    df["Launch"] = df["Launch"].astype(str).str.replace(REFERENCES_AT_END, "", regex=True)
+    df["Launch"] = df["Launch"].astype(str)
+    df["Launch"] = df["Launch"].str.replace(REFERENCES_AT_END, "", regex=True)
     df["Launch"] = df["Launch"].str.extract(r"^(.*?[\d]{4})", expand=False)
-
-    # 嘗試使用多種日期格式解析
-    date_formats = ["%Y-%m-%d", "%Y/%m/%d", "%b %Y", "%Y"]
-    for fmt in date_formats:
-        try:
-            df["Launch"] = pd.to_datetime(df["Launch"], format=fmt, errors="coerce")
-            if df["Launch"].notna().all():  # 如果所有值都成功解析
-                break
-        except Exception:
-            continue
-
-    # 如果日期仍然無法解析，記錄警告並繼續
-    if df["Launch"].isna().any():
-        print(f"Warning: Some Launch dates could not be parsed for {vendor}")
-
+    df["Launch"] = pd.to_datetime(df["Launch"], errors="coerce")  # 移除 infer_datetime_format
 
     if [c for c in Counter(df.columns).items() if c[1] > 1]:
-            df = df.loc[:, ~df.columns.duplicated()]
+        df = df.loc[:, ~df.columns.duplicated()]
 
     return df
 
@@ -121,11 +108,24 @@ def merge_columns(df, dst, src, replace_no_with_nan=False, delete=True):
     return df
 
 
+def remove_bracketed_references(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """
+    Remove bracketed references like [274] from specified columns.
+
+    :param df: Input DataFrame
+    :param columns: List of columns to clean
+    :return: Cleaned DataFrame
+    """
+    for col in columns:
+        if col in df.columns:
+            df[col] = df[col].astype(str).str.replace(r"\[\d+\]", "", regex=True).str.strip()
+    return df
+
+
 def main():
     for vendor in ["NVIDIA", "AMD", "Intel"]:
         html = requests.get(data[vendor]["url"]).text
         cleaned_html = clean_html(html)
-        # 使用 StringIO 包裝 cleaned_html 避免警告
         dfs = pd.read_html(
             StringIO(cleaned_html),
             match=re.compile("Launch|Release Date & Price"),
@@ -140,8 +140,10 @@ def main():
         ignore_index=True,
     )
 
-    # 處理其他欄位合併與清理邏輯
-    # 此處簡化，完整內容請參考原邏輯
+    # 移除指定欄位中的中括號內容
+    df = remove_bracketed_references(df, ["Model", "Die size (mm2)"])
+
+    # 其他合併與清理邏輯可在此補充
 
     # 輸出結果至 JSON
     result_dict = {}
