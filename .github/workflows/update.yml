@@ -50,5 +50,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: gpu-data
           force: true
-
-      - uses: gautamkrishnar/keepalive-workflow@master
