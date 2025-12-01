@@ -12,7 +12,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Build 🔧
+      - name: Checkout repository 🔧
         uses: actions/checkout@v4
 
       - name: Set up Python 3.8
@@ -23,11 +23,23 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy pandas requests lxml
+          pip install -r requirements.txt
 
       - name: Update data
         run: |
           python update.py
+
+      - name: Validate output
+        run: |
+          python validators.py gpu.json
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gpu-info-logs
+          path: '*.log'
+          retention-days: 7
 
       - name: Commit files
         id: commit
@@ -35,11 +47,11 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "github-actions"
           git add --all
-          if [-z "$(git status --porcelain)"]; then
-             echo "::set-output name=push::false"
+          if [ -z "$(git status --porcelain)" ]; then
+             echo "push=false" >> $GITHUB_OUTPUT
           else
-             git commit -m "Add changes" -a
-             echo "::set-output name=push::true"
+             git commit -m "Update GPU data - $(date +'%Y-%m-%d')" -a
+             echo "push=true" >> $GITHUB_OUTPUT
           fi
         shell: bash
 

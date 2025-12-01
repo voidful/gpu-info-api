@@ -107,6 +107,68 @@ Here's an example of the JSON data returned by the API for two GPU models:
 
 You can then extract specific information about a GPU model using its key, such as "AD104-250" or "AD104-400".
 
+## Development
+
+### Running the Script
+
+The `update.py` script fetches GPU data from Wikipedia and generates the `gpu.json` file.
+
+#### Installation
+
+Install dependencies using:
+```bash
+pip install -r requirements.txt
+```
+
+#### Basic Usage
+
+```bash
+# Standard run - fetches data and creates gpu.json
+python update.py
+
+# Dry run - validates data without writing file
+python update.py --dry-run
+
+# Custom output path
+python update.py -o custom_output.json
+
+# Debug mode with detailed logging
+python update.py --log-level DEBUG
+```
+
+### Testing
+
+Run the test suite to verify functionality:
+
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run with coverage
+python -m pytest tests/ --cov=. -v
+```
+
+### Features
+
+The refactored codebase includes:
+
+- ✅ **Comprehensive error handling** with retry logic for network failures
+- ✅ **Professional logging** to both console and file (`gpu_info_api.log`)
+- ✅ **Data validation** at multiple stages to ensure quality
+- ✅ **Automated testing** with 19 unit tests
+- ✅ **Type hints** throughout for better code safety
+- ✅ **CLI arguments** for flexible usage
+- ✅ **Graceful degradation** - continues if one vendor fails
+
+### Validation
+
+Validate the generated JSON file:
+
+```bash
+python validators.py gpu.json
+```
+
+
 ## Contributing
 
 If you'd like to contribute to this project or have any suggestions, feel free to open an issue or submit a pull
